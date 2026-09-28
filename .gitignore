@@ -19,3 +19,8 @@ Thumbs.db
 # 一時ファイル
 *.tmp
 *.bak
+
+# PyInstaller
+build/
+dist/
+*.spec

@@ -21,10 +21,17 @@ DEFAULT_CONFIG = {
     }
 }
 
+import sys
+
 class ConfigManager:
     def __init__(self, config_path=None):
         if config_path is None:
-            base_dir = os.path.dirname(os.path.abspath(__file__))
+            if getattr(sys, 'frozen', False):
+                # PyInstaller で exe 化された場合：exe と同じフォルダ
+                base_dir = os.path.dirname(sys.executable)
+            else:
+                # 通常の Python 実行時：スクリプトと同じフォルダ
+                base_dir = os.path.dirname(os.path.abspath(__file__))
             self.config_path = os.path.join(base_dir, "config.cfg")
         else:
             self.config_path = config_path
