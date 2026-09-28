@@ -53,7 +53,7 @@ class RestarsApp:
         self.root.resizable(False, False)
 
         # ウィンドウサイズと前回の保存座標の復元
-        w, h = 360, 240
+        w, h = 360, 260
         x, y = self.config_mgr.window_pos
         self.root.geometry(f"{w}x{h}+{x}+{y}")
 
@@ -215,6 +215,7 @@ class RestarsApp:
         self.settings_view = tk.Frame(self.container, bg=COLOR_CARD, bd=1, relief="solid")
         self.settings_view.configure(highlightbackground="#44445c", highlightthickness=1)
         self._setup_settings_ui()
+        self._update_alert_note_text()
 
     def _setup_settings_ui(self):
         """設定パネルのUI構築"""
@@ -281,6 +282,25 @@ class RestarsApp:
             )
             rb.pack(side="left", padx=4)
 
+        # ★ はやくはやくもーど（承諾まで無限ループ）チェックボックス ★
+        hayaku_box = tk.Frame(self.settings_view, bg=COLOR_CARD)
+        hayaku_box.pack(fill="x", padx=10, pady=(2, 4))
+
+        self.hayaku_var = tk.BooleanVar(value=self.config_mgr.hayaku_mode)
+        self.hayaku_check = tk.Checkbutton(
+            hayaku_box,
+            text="はやくはやくもーど (承諾まで無限ループ)",
+            variable=self.hayaku_var,
+            bg=COLOR_CARD,
+            fg=COLOR_TEXT_MAIN,
+            selectcolor=COLOR_BG,
+            activebackground=COLOR_CARD,
+            activeforeground=COLOR_ALERT,
+            font=("Meiryo", 8),
+            command=self._on_hayaku_changed
+        )
+        self.hayaku_check.pack(side="left")
+
         # 設定パネルを閉じるボタン
         close_set_btn = tk.Button(
             self.settings_view, text="完了して戻る", bg=COLOR_BTN_BG, fg=COLOR_TEXT_MAIN,
@@ -318,6 +338,24 @@ class RestarsApp:
 
     def _on_tone_changed(self):
         self.config_mgr.sound_tone = self.tone_var.get()
+
+    def _on_hayaku_changed(self):
+        """はやくはやくもーどの切替（true: 無限ループ, false: 4回で自動ミュート）"""
+        self.config_mgr.hayaku_mode = self.hayaku_var.get()
+        self._update_alert_note_text()
+
+    def _update_alert_note_text(self):
+        """はやくはやくモードの状態に応じて案内文を更新"""
+        if self.config_mgr.hayaku_mode:
+            self.alert_note.configure(
+                text="※はやくはやくもーど: すいっちを押すまで鳴り続けます",
+                fg=COLOR_ALERT
+            )
+        else:
+            self.alert_note.configure(
+                text="※チャイムが4回鳴ると自動ミュート（すいっちで休憩開始）",
+                fg=COLOR_TEXT_SUB
+            )
 
     def _preview_sound(self):
         """現在の音量・音色でテスト再生"""
@@ -360,10 +398,17 @@ class RestarsApp:
         作業時間（20分）終了時：
         ★ フルスクリーンゲームのエスケープ（最小化）を絶対に起こさない ★
         フォーカスを奪う新規ウィンドウや deiconify/lift は一切行わず、
-        既存ウィンドウ内のパネルを切り替え、音をループ再生する。
+        既存ウィンドウ内のパネルを切り替え、音を鳴らす。
+        - はやくはやくもーど ON: 承諾まで無限ループ (max_repeats=None)
+        - はやくはやくもーど OFF: 4回チャイムが鳴ったら自動ミュート (max_repeats=4)
+        どちらの場合も、すいっちを押すまでタイマーは休憩に移行しない。
         """
         self.state = "WAITING_CONFIRM"
-        self.sound_mgr.play_loop(self.config_mgr.volume, self.config_mgr.sound_tone)
+
+        repeats = None if self.config_mgr.hayaku_mode else 4
+        self.sound_mgr.play_loop(self.config_mgr.volume, self.config_mgr.sound_tone, max_repeats=repeats)
+
+        self._update_alert_note_text()
 
         # パネルの切り替え
         self.timer_view.pack_forget()

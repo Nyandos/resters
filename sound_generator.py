@@ -96,8 +96,12 @@ class SoundManager:
 
         return buf.getvalue()
 
-    def play_loop(self, volume_percent=70, tone_type="gentle"):
-        """指定の音量・音色で非同期ループ再生を開始"""
+    def play_loop(self, volume_percent=70, tone_type="gentle", max_repeats=None):
+        """
+        指定の音量・音色で非同期ループ再生を開始。
+        max_repeats が指定されている場合（例: 4）、その回数再生後に自動ミュート。
+        None の場合はストップされるまで無限ループ（はやくはやくもーど）。
+        """
         with self._lock:
             # 既に再生中なら一旦停止
             self._stop_internal()
@@ -109,11 +113,17 @@ class SoundManager:
             self._is_playing = True
 
             def loop_worker():
+                played_count = 0
                 while self._is_playing:
                     try:
                         winsound.PlaySound(wav_bytes, winsound.SND_MEMORY)
+                        played_count += 1
+                        if max_repeats is not None and played_count >= max_repeats:
+                            # 指定回数（4回）鳴り終えたら自動ミュート
+                            break
                     except Exception:
                         break
+                self._is_playing = False
 
             self._play_thread = threading.Thread(target=loop_worker, daemon=True)
             self._play_thread.start()

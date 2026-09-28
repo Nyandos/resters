@@ -17,6 +17,7 @@ DEFAULT_CONFIG = {
         "window_x": "120",           # ウィンドウ位置X（サブモニター等の位置記憶用）
         "window_y": "120",           # ウィンドウ位置Y
         "auto_resume": "true",       # 20秒休憩終了後に自動で作業タイマーを再開するか
+        "hayaku_mode": "false",      # はやくはやくもーど: true=承諾まで無限ループ, false=4回で自動ミュート
     }
 }
 
@@ -125,4 +126,13 @@ class ConfigManager:
     @auto_resume.setter
     def auto_resume(self, val):
         self.config.set("SETTINGS", "auto_resume", "true" if val else "false")
+        self.save()
+
+    @property
+    def hayaku_mode(self):
+        return self.config.getboolean("SETTINGS", "hayaku_mode", fallback=False)
+
+    @hayaku_mode.setter
+    def hayaku_mode(self, val):
+        self.config.set("SETTINGS", "hayaku_mode", "true" if val else "false")
         self.save()
