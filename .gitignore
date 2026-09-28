@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+
+# OS / エディタ
+Thumbs.db
+.DS_Store
+.vscode/
+.idea/
+.history/
+*.log
+
+# 一時ファイル
+*.tmp
+*.bak
